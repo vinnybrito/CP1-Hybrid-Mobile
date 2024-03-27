@@ -127,7 +127,7 @@
             android:layout_height="80dp"
             android:layout_margin="10dp"
             android:background="@drawable/operators_button"
-            android:text="x" />
+            android:text="*" />
 
     </LinearLayout>
 

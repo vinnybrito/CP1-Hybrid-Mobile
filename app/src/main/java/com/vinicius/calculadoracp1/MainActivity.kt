@@ -14,113 +14,109 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // _________ VALORES MATEMATICOS _________ //
+        // Configuração dos botões numéricos
+        setupNumberButtons()
 
-        binding.numberZero.setOnClickListener {
-            addExpression("0")
+        // Configuração dos botões de operação
+        setupOperationButtons()
+
+        // Configuração dos outros botões (backspace, limpar, inverter sinal)
+        setupOtherButtons()
+
+        // Configuração do botão de igual
+        setupEqualsButton()
+    }
+
+    private fun setupNumberButtons() {
+        val numberButtons = listOf(
+            binding.numberZero,
+            binding.numberOne,
+            binding.numberTwo,
+            binding.numberTree,
+            binding.numberFour,
+            binding.numberFive,
+            binding.numberSix,
+            binding.numberSeven,
+            binding.numberEight,
+            binding.numberNine,
+            binding.dot
+        )
+
+        // Adiciona um listener para cada botão numérico
+        numberButtons.forEach { button ->
+            button.setOnClickListener {
+                addExpression(button.text.toString())
+            }
         }
+    }
 
-        binding.numberOne.setOnClickListener {
-            addExpression("1")
+    private fun setupOperationButtons() {
+        val operationButtons = listOf(
+            binding.plus,
+            binding.subtraction,
+            binding.multiplication,
+            binding.division,
+            binding.percentage
+        )
+
+        // Adiciona um listener para cada botão de operação
+        operationButtons.forEach { button ->
+            button.setOnClickListener {
+                replaceLastOperation(button.text.toString())
+            }
         }
+    }
 
-        binding.numberTwo.setOnClickListener {
-            addExpression("2")
-        }
-
-        binding.numberTree.setOnClickListener {
-            addExpression("3")
-        }
-
-        binding.numberFour.setOnClickListener {
-            addExpression("4")
-        }
-
-        binding.numberFive.setOnClickListener {
-            addExpression("5")
-        }
-
-        binding.numberSix.setOnClickListener {
-            addExpression("6")
-        }
-
-        binding.numberSeven.setOnClickListener {
-            addExpression("7")
-        }
-
-        binding.numberEight.setOnClickListener {
-            addExpression("8")
-        }
-
-        binding.numberNine.setOnClickListener {
-            addExpression("9")
-        }
-
-        binding.dot.setOnClickListener {
-            addExpression(".")
-        }
-
-        // _________ EXPRESSÕES MATEMATICAS _________ //
-
-        binding.plus.setOnClickListener {
-            addExpression("+")
-        }
-
-        binding.subtraction.setOnClickListener {
-            addExpression("-")
-        }
-
-        binding.multiplication.setOnClickListener {
-            addExpression("x")
-        }
-
-        binding.division.setOnClickListener {
-            addExpression("/")
-        }
-
-        binding.percentage.setOnClickListener {
-            addExpression("%")
-        }
-
-        // _________ OUTROS BOTÕES _________ //
-
+    private fun setupOtherButtons() {
+        // Configuração do botão de backspace
         binding.backspace.setOnClickListener {
             binding.txtOperation.text = binding.txtOperation.text.dropLast(1)
         }
 
+        // Configuração do botão de limpar
         binding.clean.setOnClickListener {
             binding.txtOperation.text = ""
             binding.txtResult.text = ""
         }
 
-        var firstClick = true
+        // Configuração do botão de inverter sinal
         binding.invertSignal.setOnClickListener {
-
-            if (firstClick) {
-                binding.txtOperation.text = "-" + binding.txtOperation.text
-                firstClick = false
+            val currentText = binding.txtOperation.text.toString()
+            binding.txtOperation.text = if (currentText.startsWith('-')) {
+                currentText.substring(1) // Remove o sinal negativo
             } else {
-                binding.txtOperation.text = binding.txtOperation.text.drop(1)
-                firstClick = true
+                "-$currentText" // Adiciona um sinal negativo
             }
         }
+    }
 
-        // _________ RESULT BUTTON _________ //
-
+    private fun setupEqualsButton() {
+        // Configuração do botão de igual
         binding.equals.setOnClickListener {
             showResult()
         }
-
     }
 
-    // ---------------------------------------------------------- //
-
     private fun addExpression(value: String) {
+        // Adiciona o valor do botão ao texto da operação
         binding.txtOperation.append(value)
     }
 
+    private fun replaceLastOperation(newOperator: String) {
+        val currentText = binding.txtOperation.text.toString()
+
+        // Verifica se o último caractere no texto da operação é um operador
+        if (currentText.isNotEmpty() && currentText.last().toString() in listOf("+", "-", "*", "/", "%")) {
+            // Se sim, substitui o último operador pelo novo
+            binding.txtOperation.text = currentText.dropLast(1) + newOperator
+        } else {
+            // Se não, apenas adiciona o novo operador
+            addExpression(newOperator)
+        }
+    }
 
     private fun showResult() {
+        // Exibe o resultado da expressão inserida
         val expression = binding.txtOperation.text.toString()
 
         try {
@@ -132,6 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun evaluateExpression(expression: String): Double {
+        // Avalia a expressão matemática e retorna o resultado
         val tokens = tokenizeExpression(expression)
         val numbers = mutableListOf<Double>()
         val operators = mutableListOf<String>()
@@ -161,33 +158,56 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tokenizeExpression(expression: String): List<String> {
-        val regex = "(?<=[-+*/])|(?=[-+*/])".toRegex()
-        return expression.split(regex).filter { it.isNotBlank() }
+        // Divide a expressão em tokens
+        val regex = "(?<=[-+*/%])|(?=[-+*/%])".toRegex()
+        val tokens = mutableListOf<String>()
+        var currentToken = ""
+
+        for (char in expression) {
+            if (char.isDigit() || char == '.') {
+                currentToken += char
+            } else {
+                if (currentToken.isNotEmpty()) {
+                    tokens.add(currentToken)
+                    currentToken = ""
+                }
+                if (char == '-' && (tokens.isEmpty() || tokens.last() in listOf("+", "-", "*", "/", "%"))) {
+                    // Se o '-' for o primeiro caractere ou se for precedido por um operador
+                    currentToken += char
+                } else {
+                    tokens.add(char.toString())
+                }
+            }
+        }
+
+        if (currentToken.isNotEmpty()) {
+            tokens.add(currentToken)
+        }
+
+        return tokens.filter { it.isNotBlank() }
     }
 
     private fun String.isNumber(): Boolean {
+        // Verifica se uma string representa um número
         return matches("-?\\d+(\\.\\d+)?".toRegex())
     }
 
     private fun hasPrecedence(op1: String, op2: String): Boolean {
+        // Verifica se o operador 1 tem precedência sobre o operador 2
         return !(op1 == "+" || op1 == "-") || (op2 == "*" || op2 == "/")
     }
 
     private fun applyOperation(left: Double, right: Double, operator: String): Double {
+        // Aplica a operação matemática especificada
         return when (operator) {
-            "+" -> left + right
-            "-" -> left - right
-            "x" -> left * right
-            "/" -> left / right
+            "+" -> addValues(left, right)
+            "-" -> subtractValues(left, right)
+            "*" -> multiplyValues(left, right)
+            "/" -> divideValues(left, right)
+            "%" -> calculatePercentage(left, right)
             else -> throw IllegalArgumentException("Operador inválido: $operator")
         }
     }
-
-
-
-
-
-    // _____________ FUNÇÕES MATEMÁTICAS _____________ //
 
     private fun addValues(firstValue: Double, secondValue: Double): Double {
         return firstValue + secondValue
@@ -202,8 +222,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun divideValues(firstValue: Double, secondValue: Double): Double {
+        if (secondValue == 0.0) {
+            throw ArithmeticException("Divisão por zero")
+        }
         return firstValue / secondValue
     }
 
-
+    private fun calculatePercentage(value: Double, percentage: Double): Double {
+        return value * (percentage / 100.0)
+    }
 }
