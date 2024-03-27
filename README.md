@@ -1,4 +1,5 @@
-# Calculadora feita com Kotlin - CP1
+# Recomendado Pixel 3A
+# Calculadora feita com Kotlin - CP17
 
 Este repositório contém o projeto de uma calculadora feita em Kotlin, desenvolvido como parte das atividades do curso de **Análise e Desenvolvimento de Sistemas** da [Faculdade de Informática e Administração Paulista (FIAP)](https://www.fiap.com.br/).
 
